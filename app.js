@@ -11,13 +11,11 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
-// Specify the origin of your frontend
-const corsOptions = {
-  origin: 'https://justwriteblog.netlify.app',
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
 
-app.use(cors(corsOptions));
+app.use(cors({
+  origin :'https://justwriteblog.netlify.app',
+  credentials:true,
+}));
 
 app.get('/', (req, res) => {
   res.send('Hello World');
