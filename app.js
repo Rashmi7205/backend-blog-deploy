@@ -12,7 +12,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({extended:true}));
 
 app.use(cors({
-    origin:"*",
+    origin:"https://justwriteblog.netlify.app/",
     credentials:true
 }));
 
