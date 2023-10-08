@@ -12,7 +12,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({extended:true}));
 
 app.use(cors({
-    origin:"https://tiny-pudding-f3ef0e.netlify.app",
+    origin:"http://localhost:3000",
     credentials:true
 }));
 
