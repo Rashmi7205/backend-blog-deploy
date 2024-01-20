@@ -41,7 +41,7 @@ const blogSchema = new Schema({
         type: String,
     },
     catagory: {
-        type: Array,
+        type:String,
     },
     image: {
         public_id: {

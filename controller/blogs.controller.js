@@ -6,6 +6,38 @@ import fs from 'fs';
 import mongoose from 'mongoose';
 
 
+
+const getUserBlogs = async (req,res,next)=>{
+   try {
+        const {id} = req.user;
+        if(!id){
+            return next(new AppError("Missing Parameter: Userid is required ",402));
+        }
+        const user = await User.findById(id);
+
+        if(!user){
+            return next(new AppError("This user Doesnot exist",402));
+        }
+        const blogs = await Blogs.aggregate([
+            {
+                $match:{
+                    author:new mongoose.Types.ObjectId(id)
+                }
+            }
+        ]);
+       
+        return res.status(200).json({
+            success:true,
+            message:"User Blogs fetched successfully",
+            blogs
+        });
+   } catch (error) {
+    return next( new AppError("Internal server Error",500));
+   } 
+}
+
+
+// get all blogs 
 const getBlogs = async (req,res,next)=>{
     try {
         const {limit,skip} = req.body;
@@ -14,7 +46,7 @@ const getBlogs = async (req,res,next)=>{
               $skip: skip ||0
             },
             {
-                  $limit: limit || 10
+                  $limit: limit || 4
             },
             {
               $lookup: {
@@ -57,7 +89,6 @@ const getBlogs = async (req,res,next)=>{
         return next(new AppError(error.message,400));
     }
 }   
-
 const getBlogById = async (req,res,next)=>{
     
     try {
@@ -118,7 +149,7 @@ const getBlogById = async (req,res,next)=>{
         res.status(200).json({
             succsess:true,
             message:"Blog Fetched Successfully",
-            blog
+            blog : blog[0]
         });
     } catch (error) {
         return next(new AppError(error.message,400));
@@ -187,7 +218,7 @@ const createBlogs = async (req,res,next)=>{
 const updateBlogs = async (req,res,next)=>{
     try {
         const { id } = req.params;
-        const { title, description, content, catagory } = req.body;
+        const { title, description, content, category } = req.body;
     
         const blog = await Blogs.findById(id);
     
@@ -201,7 +232,7 @@ const updateBlogs = async (req,res,next)=>{
             title,
             description,
             content,
-            catagory
+            category
         }, { new: true }); // Adding { new: true } to get the updated document
     
         
@@ -373,5 +404,5 @@ export {
     getBlogById,
     postComment,
     postLike,
-    
+    getUserBlogs
 }

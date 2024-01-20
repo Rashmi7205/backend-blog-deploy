@@ -2,11 +2,14 @@ import { Router  } from "express";
 import isLoggedIn from "../middleware/user.auth.js";
 import {getBlogs,createBlogs,updateBlogs,deleteBlogs,getBlogById,
 postComment,postLike,
+getUserBlogs,
 } from '../controller/blogs.controller.js';
 import multer from "multer";
 import upload from "../middleware/multer.middleware.js";
 
 const router = Router();
+
+router.get('/getmyblogs',isLoggedIn,getUserBlogs);
 
 router.post('/getblogs',getBlogs)
         .get('/getblog/:id',getBlogById);
