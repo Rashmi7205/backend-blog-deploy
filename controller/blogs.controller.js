@@ -2,11 +2,50 @@ import Blogs from "../model/blog.schema.js";
 import AppError from "../utils/apperror.js";
 import cloudinary from 'cloudinary';
 import User from '../model/user.schema.js';
-import fs from 'fs/promises';
+import fs from 'fs';
+import mongoose from 'mongoose';
+
 
 const getBlogs = async (req,res,next)=>{
     try {
-        const blogs = await Blogs.find({}).limit(5);
+        const {limit,skip} = req.body;
+        const blogs = await Blogs.aggregate([	
+            {
+              $skip: skip ||0
+            },
+            {
+                  $limit: limit || 10
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "author",
+                foreignField: "_id",
+                as: "author"
+              }
+            },
+            {
+              $unwind:"$author"
+            },
+            {
+                $project: {
+                  _id:1,
+                title:1,
+                description:1,
+                content:1,
+                catagory:1,
+                author:{
+                  _id:1,
+                  name:1,
+                  profilePic:"$author.profilePic.secure_url",
+                },
+                likedBy:1,
+                comments:1,
+                createdAt:1,
+                updatedAt:1
+                }
+            }
+          ]);
         res.status(200).json({
             succsess:true,
             message:"All Blogs fetched succsessfully",
@@ -26,14 +65,59 @@ const getBlogById = async (req,res,next)=>{
             return next(new AppError('Blog Id is required',400));
         } 
       
-        const blog = await Blogs.findById(id);
-        if(!blog) {
+        const blog = await Blogs.aggregate(
+            [
+               { 
+                '$match': {
+                    '_id':new mongoose.Types.ObjectId(id)
+                  }
+                }
+            ]
+        );
+
+        const comments = await Blogs.aggregate([
+                { 
+                '$match': {
+                    '_id':new mongoose.Types.ObjectId(id)
+                  }
+                },
+                {
+                    $unwind:"$comments"
+                  },
+               {
+                 $lookup: {
+                   from: "users",
+                   localField: "comments.user",
+                   foreignField: "_id",
+                   as: "user"
+                 }
+               },
+               {
+                 $unwind:"$user"
+               },
+               {
+                 $project: {
+                   "comment":"$comments.comment",
+                      "userDetails":{
+                     name:"$user.name",
+                     profilePic:"$user.profilePic.secure_url",
+                     id:"$user._id",
+                   }
+                 }
+               }
+        ]);
+
+        
+
+        if(!blog.length) {
             return next(new AppError("Blog Post Doesnot exist",400));
         }
+       
+        blog[0].comments=comments;
         res.status(200).json({
             succsess:true,
             message:"Blog Fetched Successfully",
-            blog,
+            blog
         });
     } catch (error) {
         return next(new AppError(error.message,400));
@@ -44,62 +128,56 @@ const getBlogById = async (req,res,next)=>{
 
 const createBlogs = async (req,res,next)=>{
     try {
-        const {title,description,content,catagory} = req.body;
-        const {id} = req.user;
-        const user = await User.findById(id);
-      
+        const {title,description,content,category} = req.body;
+        const {id} = req.user;      
+
         if(!title||!content){
             return next(new AppError("Title and Content Must required",400));
         }
         
+        const user = await User.findById(id);
 
-
-        const blog = await Blogs.create({
-            title,
-            description,
-            publicUrl:'#',
-            author:user,
-            content,
-            catagory,
-            image:{
-                public_id:'#',
-                secure_url:'https://res.cloudinary.com/dkkaj165g/image/upload/v1691595963/blog/pngtree-business-people-avatar-icon-user-profile-free-vector-png-image_1527664_zflele.jpg',
-            },
-            comments:[],
-            likedBy:0,
-            relatedPosts:[],
-        });
-
-        // / Uploading the image file of the blog
-        if(req.file){
-            const result = await cloudinary.v2.uploader.upload(req.file.path,{
-                folder:'blog',
-            });
-            // Updating the urls fro thr image
-            if(result){
-                blog.image.public_id=result.public_id 
-                blog.image.secure_url =result.secure_url;
-            }
-            fs.rm(`uploads/${req.file.filename}`);
+        if(!user){
+            return next(new AppError("This user doesnot exist",402));
         }
 
-        // / adding the related posts
+        const blog =  await Blogs.create({
+            title,
+            content,
+            description,
+            category,
+            author:user._id,
+            publicUrl:req.body?.publicUrl || "#",
+        });
 
-        const relatedPosts = await Blogs.find({catagory:catagory})
-        blog.relatedPosts = relatedPosts;
+        if(!blog){
+            return next(new AppError("Something Went Wrong!",500));
+        }
         
+
+        if(req.file){
+            const result = await cloudinary.v2.uploader.upload(req.file.path, {
+                folder: 'blog'
+              });
+              
+             if(result){
+                blog.image.public_id = result.public_id;
+                blog.image.secure_url =result.secure_url;
+             }
+          
+            if (fs.existsSync(req.file.path)) {
+                // File exists, delete it
+                fs.unlinkSync(req.file.path);
+              }
+        }
+
         await blog.save();
 
-        /// adding it to the user blog
-        user.blogs.push(blog.id);
-        await user.save();
-
-        res.status(200).json({
-            succsess:true,
-            message:"Blog created Succsessfully",
+        return res.status(200).json({
+            sucess:true,
+            message:"Blog Created Successfully",
             blog
-        })
-
+        });
 
     } catch (error) {
         return next(new AppError(error.message,400));
@@ -128,15 +206,23 @@ const updateBlogs = async (req,res,next)=>{
         
            // / Uploading the image file of the blog
            if(req.file){
+            if(blog?.image?.public_id) {
+                await cloudinary.v2.uploader.destroy(blog?.image?.public_id);
+            }
             const result = await cloudinary.v2.uploader.upload(req.file.path,{
                 folder:'blog',
             });
+           
             // Updating the urls fro thr image
             if(result){
-                blog.image.public_id=result.public_id 
+                blog.image.public_id=result.public_id ;
                 blog.image.secure_url =result.secure_url;
             }
-            fs.rm(`uploads/${req.file.filename}`);
+           
+            if (fs.existsSync(req.file.path)) {
+                // File exists, delete it
+                fs.unlinkSync(req.file.path);
+              }
         }
 
         await blog.save();
@@ -208,15 +294,14 @@ const postComment = async (req,res,next)=>{
         }
         const user = await User.findOne({email});
         if(!user){
-            return next(new AppError('User Not regitser',400));
+            return next(new AppError('User Not registered',400));
         }
         const blog = await Blogs.findById(id);
     
         const commentObj = {
-            id:user._id,
-            name:user.name,
-            profilePic:user.profilePic.secure_url,
+            user:user._id,
             comment:newComment,
+            profilePic:user?.profilePic?.secure_url,
         }
         
         blog.comments.push(commentObj);
@@ -225,13 +310,14 @@ const postComment = async (req,res,next)=>{
 
         res.status(200).json({
             succsess:true,
-            message:"Commend Added Succsessfully",
+            message:"Comment Added Succsessfully",
             blog,
         });
     } catch (error) {
             return next(new AppError(error.message,400));
     }
 }
+
 
 const postLike = async (req,res,next)=>{
     try {

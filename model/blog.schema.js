@@ -1,44 +1,65 @@
-import {model,Schema} from 'mongoose';
-
-const blogSchema = new Schema({
-    title:{
-        type:String,
-        required:true,
-        minLength:[5,'Title length should be atleast 5 char']
+import mongoose, { model, Schema } from 'mongoose';
+const commentSchema = new Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
     },
-    description:{
-        type:String
-    },
-    publicUrl:{
+    profilePic:{
         type:String,
     },
-    author:{
-        type:Object,
-        required:true,
+    comment: {
+        type: String,
+        minLength: [1, "Empty Comment"],
+        maxLength: [200, "Max 200 char"]
     },
-    content:{
-        type:String,
-    },
-    catagory:{
-        type:Array,
-    },
-    image:{
-        public_id :{
-            type:String,
-        },
-        secure_url:{
-            type:String,
+    replays: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
         }
-    },
-    comments:{
-        type:Array,
-    },
-    likedBy:{
-        type:Array
-    },
-    relatedPosts:{
-        type:Array
-    }
+    ]
 },{timestamps:true});
 
-export default model('Blogs',blogSchema);
+const blogSchema = new Schema({
+    title: {
+        type: String,
+        required: true,
+        minLength: [5, 'Title length should be atleast 5 char']
+    },
+    description: {
+        type: String
+    },
+    publicUrl: {
+        type: String,
+    },
+    author: {
+        type: Object,
+        required: true,
+    },
+    content: {
+        type: String,
+    },
+    catagory: {
+        type: Array,
+    },
+    image: {
+        public_id: {
+            type: String,
+        },
+        secure_url: {
+            type: String,
+        }
+    },
+    comments: [
+        commentSchema
+    ],
+    likedBy: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        }
+    ],
+}, { timestamps: true });
+
+export default model('Blogs', blogSchema);

@@ -1,23 +1,19 @@
 import AppError from "../utils/apperror.js";
-import Jwt  from "jsonwebtoken";
-import User from '../model/user.schema.js';
+import jwt  from "jsonwebtoken";
 
 const isLoggedIn = async (req,res,next)=>{
-
-    try {
-        const {token} = req.cookies;
-        if(!token){
-            return next(new AppError('Unauthenticated User',400));
+        try {
+            const {token} = req.cookies;
+            if(!token){
+                return next(new AppError("Login To access this route",404));
+            }
+            const userDetails = await jwt.verify(token,process.env.JWT_SECRET);
+            req.user = userDetails;
+            next();
+        } catch (error) {
+            return next(new AppError("Internal Server Error",500));
         }
-        const userDetails = await Jwt.verify(token,process.env.JWT_SECRET);
-       
-        req.user = userDetails;
-    
-    } catch (error) {
-        return next(new AppError("Unauthorized User",400));
-    }
-  
-    next();
+        
 }
 
 export default isLoggedIn;

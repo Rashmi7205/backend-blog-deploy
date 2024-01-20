@@ -1,17 +1,18 @@
-import path from 'path';
-import multer from 'multer';
+import multer from "multer";
+import path from 'node:path';
+
+const storage = multer.diskStorage({
+    destination:'./uploads',
+    filename:(req,file,cb)=>{
+        cb(null,file.originalname);
+    }
+});
 
 const upload = multer({
     dest:'./uploads',
-    limits:{fileSize:5*1024*1024}, //max size 5 mb
-    storage:multer.diskStorage({
-        destination:'./uploads',
-        filename:(_req,file,cb)=>{
-            cb(null,file.originalname);
-        }
-    }),
-    fileFilter:(_req,file,cb)=>{
-        let ext = path.extname(file.originalname);        
+    storage,
+    fileFilter:(req,file,cb)=>{
+        let ext = path.extname(file.originalname);
         if(
             ext!==".jpg" &&
             ext!==".png" &&
@@ -23,7 +24,7 @@ const upload = multer({
             return;
         }
         cb(null,true);
-    },
+    }
 });
 
 export default upload;

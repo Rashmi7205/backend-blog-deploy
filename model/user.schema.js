@@ -1,7 +1,14 @@
-import {Schema,model}  from "mongoose";
+import mongoose,{ Schema,model}  from "mongoose";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+
+const blogSchema = new Schema({
+    blog:{type:mongoose.Schema.Types.ObjectId,
+    ref:'Blog',
+    required:true
+    }
+});
 
 const userSchema = new Schema({
     name:{
@@ -39,9 +46,23 @@ const userSchema = new Schema({
     totlalLikes:{
         type:Number
     },
-    follwers:Array,
-    followings:Array,
-    blogs:Array,
+    follwers:[
+       {
+        userId:{
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"User"
+        }
+       }
+    ],
+    followings:[
+        {
+         userId:{
+             type:mongoose.Schema.Types.ObjectId,
+             ref:"User"
+         }
+        }
+     ],
+    blogs:[blogSchema],
     forgotPasswordToken:{
         type:String
     },

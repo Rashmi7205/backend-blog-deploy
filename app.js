@@ -16,9 +16,7 @@ app.use(cors({
     credentials:true
 }));
 
-app.get('/',(req,res)=>{
-    res.send("Hello World");
-})
+app.use('/',express.static('/build/index.html'))
 
 app.use('/api/v1/user',userRoutes);
 app.use('/api/v1/blog',blogRoutes);

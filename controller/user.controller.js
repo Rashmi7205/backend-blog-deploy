@@ -1,7 +1,5 @@
 import AppError from "../utils/apperror.js";
 import User from '../model/user.schema.js';
-import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
 import emailValidator from 'email-validator';
 import cloudinary from 'cloudinary';
 import fs from 'fs/promises';
@@ -395,6 +393,10 @@ const followUser = async (req,res,next)=>{
         // cuurent user id
         const userId = req.user.id;
 
+        if(id === userId){
+            return next(new AppError("Invalid request",404));
+        }
+
         // getting the user from the Db
         const currentUser = await User.findById(userId);
         
@@ -407,7 +409,7 @@ const followUser = async (req,res,next)=>{
         if( currentUser.followings.includes(id)){
                 return  res.status(200).json({
                     success:true,
-                    message:"Already Follw succsessfull",
+                    message:"Already Follow succsessfull",
                     id,
                 });
         }
