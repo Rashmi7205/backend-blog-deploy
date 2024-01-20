@@ -8,7 +8,6 @@ import mongoose from 'mongoose';
 
 const getBlogs = async (req,res,next)=>{
     try {
-<<<<<<< HEAD
         const {limit,skip} = req.body;
         const blogs = await Blogs.aggregate([	
             {
@@ -47,10 +46,6 @@ const getBlogs = async (req,res,next)=>{
                 }
             }
           ]);
-=======
-         const {limit,count} = req.body;
-     const blogs = await Blogs.find({}).sort({createdAt:-1}).skip(count).limit(limit);
->>>>>>> 1c3c1d4a996b336317a97529dddf564837da5c8b
         res.status(200).json({
             succsess:true,
             message:"All Blogs fetched succsessfully",

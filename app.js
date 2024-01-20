@@ -19,18 +19,15 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-<<<<<<< HEAD
-app.use('/',express.static('/build/index.html'))
-
 app.use('/api/v1/user',userRoutes);
 app.use('/api/v1/blog',blogRoutes);
 
-app.all('*',(req,res)=>{
-    return res.status(400).send('OOPS!! PAGE NOT FOUND');
-=======
 app.get('/', (req, res) => {
   res.send('Hello World');
->>>>>>> 1c3c1d4a996b336317a97529dddf564837da5c8b
+});
+
+app.all('*',(req,res)=>{
+    return res.status(400).send('OOPS!! PAGE NOT FOUND');
 });
 
 app.use('/api/v1/user', userRoutes);
