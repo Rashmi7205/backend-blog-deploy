@@ -39,6 +39,7 @@ const getBlogs = async (req,res,next)=>{
                   name:1,
                   profilePic:"$author.profilePic.secure_url",
                 },
+                image:1,
                 likedBy:1,
                 comments:1,
                 createdAt:1,
