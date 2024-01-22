@@ -40,7 +40,7 @@ const blogSchema = new Schema({
     content: {
         type: String,
     },
-    catagory: {
+    category: {
         type:String,
     },
     image: {
