@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use(cors({
-  origin: ['https://justwriteblog.netlify.app', 'http://localhost:3000'],
+  origin: ['https://justwriteblog.netlify.app', 'http://localhost:3000','https://justwriteblog.onrender.com'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
